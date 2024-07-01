@@ -6,7 +6,13 @@ from torch import nn, optim
 
 class LSTMClassifier(nn.Module):
 
-    def __init__(self, hidden_dim, vocab_size, num_layers, n_classes):
+    def __init__(self,
+                 # Dataset-related params:
+                 vocab_size,  # number of tokens in the vocabulary
+                 n_classes,  # number of classes to predict
+                 # Model (arch.) Hyperparameters:
+                 hidden_dim, num_layers,
+                 ):
         super(LSTMClassifier, self).__init__()
         self.hidden_dim = hidden_dim
 
@@ -28,7 +34,7 @@ class LSTMClassifier(nn.Module):
         # For LM (next-token prediction)
         logits_vocab = self.lm_head(out)  # Bsz, SeqLen, VocabSize
 
-        # For classification:
+        # For classification:  # TODO use only when classificat
         last_out = out[:, -1, :]  # Bsz, HiddenDim;  performs last hidden-state pooling
         logits_class = self.classifier_head(last_out)  # Bsz, NumClasses
 

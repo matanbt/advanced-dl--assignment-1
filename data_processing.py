@@ -7,14 +7,17 @@ from torch.utils.data import Dataset, TensorDataset
 
 TORCH_IGNORE_INDEX = -1
 
+
 def preprocess_lra(s: str) -> List[str]:
     # LRA tokenizer renames ']' to 'X' and delete parentheses as their tokenizer removes
     # non-alphanumeric characters.
     # https://github.com/google-research/long-range-arena/blob/264227cbf9591e39dd596d2dc935297a2070bdfe/lra_benchmarks/listops/input_pipeline.py#L46
     return s.translate({ord("]"): ord("X"), ord("("): None, ord(")"): None}).split()
 
+
 def preprocess_text(s: str) -> List[str]:
     return list(s.strip().lower())  # tokenize as chars
+
 
 class Tokenizer:
     # Similar to https://github.com/state-spaces/s4/blob/main/src/dataloaders/lra.py#L306
@@ -32,16 +35,13 @@ class Tokenizer:
         if preprocess_fn:
             s = preprocess_fn(s)
         out = [
-            self.token_to_token_id.get(token, self.token_to_token_id["<unk>"]) for token in s
-        ][:(self.max_length - 1)]
+                  self.token_to_token_id.get(token, self.token_to_token_id["<unk>"]) for token in s
+              ][:(self.max_length - 1)]
         out += [self.token_to_token_id['<eos>']]
         if pre_padding:
             # add pre-padding (<pad> token until max_length)
             out = [self.token_to_token_id['<pad>']] * (self.max_length - len(out)) + out
         return out
-
-    def get_vocab_size(self):
-        return len(self.token_to_token_id)
 
     def load(self):
         pass  # TODO load from file
@@ -49,13 +49,15 @@ class Tokenizer:
     def save(self):
         pass  # TODO
 
-    def add_tokens_from(self, samples: List[str], preprocess_fn: Callable[[str], List[str]]=None):
+    def add_tokens_from(self, samples: List[str], preprocess_fn: Callable[[str], List[str]] = None):
+        print(f"Adding tokens from {len(samples)} samples")
         for sample in samples:
             if preprocess_fn is not None:
                 sample = preprocess_fn(sample)
             for token in sample:  # each sample is a list of strings (=token)
                 if token not in self.token_to_token_id:  # word has not been assigned an index yet
                     self.token_to_token_id[token] = len(self.token_to_token_id)  # Assign each word with a unique index
+        print(f"Updated vocabulary size to {len(self.token_to_token_id)}")
 
     @property
     def vocab_size(self):
@@ -79,15 +81,17 @@ class ListOpsDataset(TensorDataset):
         super(ListOpsDataset, self).__init__()
 
         assert task in ['classification', 'auto_regressive']
-        self.task = task
+        self.task = task  # can also be modified post-init
 
         # load:
-        data = pd.read_csv(f'./{split}_d20s.tsv', sep='\t', header=None, names=['target', 'source'])
+        data = pd.read_csv(f'./data/listops/{split}_d20s.tsv', sep='\t',
+                           header=None, names=['target', 'source'])
         data["source"] = data["source"].apply(str)
         data["target"] = data["target"].apply(int)
         if n_samples is not None:  # trim dataset (mainly to testing)
             data = data.iloc[:n_samples]
         self.data = data
+        self.n_classes = len(data['target'].unique())
 
         # initialize custom tokenizer:
         if tokenizer is None:
@@ -131,7 +135,8 @@ class ListOpsDataset(TensorDataset):
 
 
 class OpenWebTextDataset(TensorDataset):
-    def __init__(self, split='train', tokenizer=None, seq_len=1024):
+    def __init__(self, split='train', tokenizer=None, seq_len=1024,
+                 n_samples: int = None):
         super().__init__()
         self.seq_len = seq_len
 
@@ -142,7 +147,8 @@ class OpenWebTextDataset(TensorDataset):
 
         if tokenizer is None:
             self.tokenizer = Tokenizer()
-            self.tokenizer.add_tokens_from(self.dataset, preprocess_fn=preprocess_text)  # TODO isn't it just a large tet sample?
+            self.tokenizer.add_tokens_from(self.dataset,
+                                           preprocess_fn=preprocess_text)  # TODO isn't it just a large tet sample?
 
         # TODO make sure this can tokenizer the ListOps dataset
         # TODO ponder about this tokenization - is it correct ot use this character-level tokenization? should we do something else to support ListOps?
@@ -152,6 +158,9 @@ class OpenWebTextDataset(TensorDataset):
         # TODO note that this means we do not pretrain with the padding token.. maybe it's not good? (seems that Ankit didn't pad in pretrain)
         self.dataset = [token for sample in self.dataset for token in sample]
 
+        if n_samples is not None:  # just for testing
+            self.dataset = self.dataset[:n_samples]
+
     def __len__(self):
         return len(self.dataset) - self.seq_len
 
@@ -159,4 +168,3 @@ class OpenWebTextDataset(TensorDataset):
         sample = self.dataset[idx: idx + self.seq_len]
         sample, target = sample[:-1], sample[1:]  # auto-regressive task
         return torch.tensor(sample), torch.tensor(target)
-
