@@ -5,12 +5,12 @@ from generic_classifier import GenericClassifier
 
 BLOCK_SIZE = 1024
 
-
 def setting_1__directly_on_listops(model_cls, model_kwargs,
-                                   batch_size=512, num_epochs=30,
+                                   batch_size=128, num_epochs=2,
+                                   n_samples_listops=500,
                                    device='cuda'
                                    ):
-    train_dataset = ListOpsDataset(split='train', task='classification')
+    train_dataset = ListOpsDataset(split='train', task='classification', n_samples=n_samples_listops)
     tokenizer = train_dataset.tokenizer
     n_classes = train_dataset.n_classes
     vocab_size = tokenizer.vocab_size
@@ -27,16 +27,18 @@ def setting_1__directly_on_listops(model_cls, model_kwargs,
 
 
 def setting_2__clm_pretrain_text_then_listops(model_cls, model_kwargs,
-                                              batch_size=512, num_epochs_pt=30, num_epochs_ft=30,
+                                              batch_size=128, num_epochs_pt=1, num_epochs_ft=1,
+                                              n_samples_listops=500, n_samples_wiki=500,
                                               device='cuda'
                                               ):
     # 1. Load data and init model
     # 1.A. Text:
-    text_dataset = OpenWebTextDataset()
+    text_dataset = OpenWebTextDataset(n_samples=n_samples_wiki, seq_len=BLOCK_SIZE)
     tokenizer = text_dataset.tokenizer
     vocab_size = tokenizer.vocab_size
     # 1.B. ListOps:
-    listops_train_dataset = ListOpsDataset(split='train', tokenizer=tokenizer, task='classification')
+    listops_train_dataset = ListOpsDataset(split='train', tokenizer=tokenizer, task='classification',
+                                           n_samples=n_samples_listops)
     n_classes = listops_train_dataset.n_classes
     listops_test_dataset = ListOpsDataset(split='test', tokenizer=tokenizer, task='classification')
 
@@ -61,11 +63,12 @@ def setting_2__clm_pretrain_text_then_listops(model_cls, model_kwargs,
 
 
 def setting_3__clm_pretrain_listops_then_listops(model_cls, model_kwargs,
-                                                 batch_size=512, num_epochs_pt=30, num_epochs_ft=30,
+                                                 batch_size=128, num_epochs_pt=1, num_epochs_ft=1,
+                                                 n_samples_listops=500, n_samples_wiki=500,
                                                  device='cuda'
                                                  ):
     # 1. Load data and init model
-    listops_train_dataset = ListOpsDataset(split='train', task='auto_regressive')
+    listops_train_dataset = ListOpsDataset(split='train', task='auto_regressive', n_samples=n_samples_listops)
     tokenizer = listops_train_dataset.tokenizer
     vocab_size = tokenizer.vocab_size
     n_classes = listops_train_dataset.n_classes

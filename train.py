@@ -51,8 +51,9 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
             # aggregate metrics
             avg_loss += loss.item()
             tot += 1
-            plotlosses.update({'train_loss': loss.item()})
-            plotlosses.send()
+            if tot % 50:
+                plotlosses.update({'train_loss': loss.item()})
+                plotlosses.send()
             # TODO validation loss on each step
 
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss / tot}, time elapsed: {(time.time() - start_time) / 60:.2f}mins')
@@ -70,4 +71,3 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
                 correct += (predicted == y).sum().item()
             print(f'Accuracy: {100 * correct / total}%')
     # TODO support auto-regressive task validation
-

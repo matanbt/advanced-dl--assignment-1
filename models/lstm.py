@@ -64,6 +64,7 @@ class LSTMBlock(nn.Module):
 
         if prev_states is None:
             h_t, c_t = torch.zeros(B, H), torch.zeros(B, H)
+            h_t, c_t = h_t.to(x.device), c_t.to(x.device)
         else:
             h_t, c_t = prev_states
 
