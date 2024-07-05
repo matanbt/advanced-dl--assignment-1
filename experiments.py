@@ -5,9 +5,10 @@ from generic_classifier import GenericClassifier
 
 BLOCK_SIZE = 1024
 
+
 def setting_1__directly_on_listops(model_cls, model_kwargs,
                                    batch_size=128, num_epochs=2,
-                                   n_samples_listops=500, train_time_limit_secs=None,
+                                   n_samples_listops=None, train_time_limit_secs=None,
                                    device='cuda'
                                    ):
     train_dataset = ListOpsDataset(split='train', task='classification', n_samples=n_samples_listops)
@@ -23,13 +24,13 @@ def setting_1__directly_on_listops(model_cls, model_kwargs,
     model = model_cls(vocab_size=vocab_size, n_classes=n_classes, block_size=BLOCK_SIZE, **model_kwargs)
     model = model.to(device)
 
-    train(model, train_dataloader, test_dataloader, num_epochs=num_epochs, task='classification',
-          device=device, time_limit_secs=train_time_limit_secs)
+    return train(model, train_dataloader, test_dataloader, num_epochs=num_epochs, task='classification',
+                 device=device, time_limit_secs=train_time_limit_secs)
 
 
 def setting_2__clm_pretrain_text_then_listops(model_cls, model_kwargs,
                                               batch_size=128, num_epochs_pt=1, num_epochs_ft=1,
-                                              n_samples_listops=500, n_samples_wiki=500,
+                                              n_samples_listops=None, n_samples_wiki=None,
                                               train_time_limit_secs=None,
                                               device='cuda'
                                               ):
@@ -61,13 +62,13 @@ def setting_2__clm_pretrain_text_then_listops(model_cls, model_kwargs,
     train_dataloader = DataLoader(listops_train_dataset, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(listops_test_dataset, batch_size=batch_size, shuffle=True)
 
-    train(model, train_dataloader, test_dataloader, num_epochs=num_epochs_ft, task='classification', device=device,
-          time_limit_secs=train_time_limit_secs)
+    return train(model, train_dataloader, test_dataloader, num_epochs=num_epochs_ft, task='classification',
+                 device=device, time_limit_secs=train_time_limit_secs)
 
 
 def setting_3__clm_pretrain_listops_then_listops(model_cls, model_kwargs,
                                                  batch_size=128, num_epochs_pt=1, num_epochs_ft=1,
-                                                 n_samples_listops=500, train_time_limit_secs=None,
+                                                 n_samples_listops=None, train_time_limit_secs=None,
                                                  device='cuda'
                                                  ):
     # 1. Load data and init model
@@ -94,8 +95,8 @@ def setting_3__clm_pretrain_listops_then_listops(model_cls, model_kwargs,
     listops_test_dataset.task = 'classification'
     train_dataloader = DataLoader(listops_train_dataset, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(listops_test_dataset, batch_size=batch_size, shuffle=True)
-    train(model, train_dataloader, test_dataloader, num_epochs=num_epochs_ft, task='classification',
-          device=device, time_limit_secs=train_time_limit_secs)
+    return train(model, train_dataloader, test_dataloader, num_epochs=num_epochs_ft, task='classification',
+                 device=device, time_limit_secs=train_time_limit_secs)
 
 
 if __name__ == '__main__':
