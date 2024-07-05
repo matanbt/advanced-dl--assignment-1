@@ -9,7 +9,7 @@ import time
 
 
 def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
-          task='classification', device='cuda'):
+          task='classification', device='cuda', time_limit_secs=None):
     """
 
     :param model: the model to train. We assume two outputs - logits for vocabulary and logits for classification.
@@ -54,12 +54,16 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
             if tot % 50:
                 plotlosses.update({'train_loss': loss.item()})
                 plotlosses.send()
+            if time_limit_secs is not None and time.time() - start_time > time_limit_secs:
+                print(f'Time limit reached. Stopping training at epoch {epoch + 1}, step {tot}.')
+                break
             # TODO validation loss on each step
 
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss / tot}, time elapsed: {(time.time() - start_time) / 60:.2f}mins')
 
     # Test the model for classification
     model.eval()
+    metric_on_test = None
     if task == 'classification':
         with torch.no_grad():
             correct, total = 0, 0
@@ -70,4 +74,7 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
                 total += y.size(0)
                 correct += (predicted == y).sum().item()
             print(f'Accuracy: {100 * correct / total}%')
+        metric_on_test = correct / total
     # TODO support auto-regressive task validation
+
+    return model, metric_on_test
