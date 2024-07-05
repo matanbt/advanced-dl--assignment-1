@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 from data_processing import ListOpsDataset, TORCH_IGNORE_INDEX, OpenWebTextDataset
 from train import train
-from lstm import LSTMClassifier
+from generic_classifier import GenericClassifier
 
 def setting_1__directly_on_listops(model_cls, model_kwargs, batch_size=256):
     train_dataset = ListOpsDataset(split='train', n_samples=1500, task='classification')
