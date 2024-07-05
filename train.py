@@ -1,14 +1,15 @@
-from lstm import LSTMClassifier
 from torch import nn, optim
 import torch
-from torch.utils.data import DataLoader
-from data_processing import ListOpsDataset, TORCH_IGNORE_INDEX, OpenWebTextDataset
+from data_processing import TORCH_IGNORE_INDEX
 from torch.nn import functional as F
+
+from utils import print_num_params
+
 
 # TODO control n_samples and n_epoch to discard test setting
 
 
-def train(model, train_dataloader, test_dataloader, num_epochs=10, task='classification'):
+def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10, task='classification'):
     # TODO add val-set support! (through the training)
     # TODO live plot it
     """
@@ -19,14 +20,21 @@ def train(model, train_dataloader, test_dataloader, num_epochs=10, task='classif
     :param num_epochs:
     :return:
     """
-    # this criterion works for both classification and auto-regressive tasks (with the targets defined in the ListOpsDataset)
+
+    print_num_params(model.encoder)
+
+    # Define criterion for each task
     criterion_lm = lambda logits, targets: F.cross_entropy(logits.view(-1, logits.size(-1)),
                                                            targets.view(-1),
                                                            ignore_index=TORCH_IGNORE_INDEX)
     criterion_cls = nn.CrossEntropyLoss()
+
+    # Init optimizer
     optimizer = optim.Adam(model.parameters(), lr=0.001)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)  [TODO OPTIONAL]
 
     # Train the model
+    model.train()
     for epoch in range(num_epochs):
         avg_loss, tot = 0, 0
         for X, y in train_dataloader:
@@ -45,7 +53,7 @@ def train(model, train_dataloader, test_dataloader, num_epochs=10, task='classif
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss / tot}')
 
     # Test the model for classification
-    # TODO model.eval
+    model.eval()
     if task == 'classification':
         with torch.no_grad():
             correct, total = 0, 0
@@ -56,3 +64,4 @@ def train(model, train_dataloader, test_dataloader, num_epochs=10, task='classif
                 correct += (predicted == y).sum().item()
             print(f'Accuracy: {100 * correct / total}%')
     # TODO support auto-regressive task validation
+

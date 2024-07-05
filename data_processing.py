@@ -7,6 +7,7 @@ from torch.utils.data import Dataset, TensorDataset
 
 TORCH_IGNORE_INDEX = -1
 
+# Loosely based on: https://github.com/google-research/long-range-arena/blob/main/lra_benchmarks/text_classification/input_pipeline.py
 
 def preprocess_lra(s: str) -> List[str]:
     # LRA tokenizer renames ']' to 'X' and delete parentheses as their tokenizer removes
@@ -71,6 +72,7 @@ class ListOpsDataset(TensorDataset):
                  tokenizer=None,  # TODO support importing tokenizer
                  n_samples: int = None,
                  task: str = 'classification',
+                 max_length: int = 1024,
                  ):
         """
         :param split: what split to load ('train' | 'test')
@@ -95,7 +97,7 @@ class ListOpsDataset(TensorDataset):
 
         # initialize custom tokenizer:
         if tokenizer is None:
-            self.tokenizer = Tokenizer()
+            self.tokenizer = Tokenizer(max_length)
             self.tokenizer.add_tokens_from(data['source'].tolist(), preprocess_fn=preprocess_lra)
         else:
             self.tokenizer = tokenizer
@@ -146,7 +148,7 @@ class OpenWebTextDataset(TensorDataset):
         self.dataset = [s for s in self.dataset if len(s) > 0]  # filter empty strings
 
         if tokenizer is None:
-            self.tokenizer = Tokenizer()
+            self.tokenizer = Tokenizer(max_length=seq_len)
             self.tokenizer.add_tokens_from(self.dataset,
                                            preprocess_fn=preprocess_text)  # TODO isn't it just a large tet sample?
 

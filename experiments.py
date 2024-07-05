@@ -3,6 +3,8 @@ from data_processing import ListOpsDataset, TORCH_IGNORE_INDEX, OpenWebTextDatas
 from train import train
 from generic_classifier import GenericClassifier
 
+BLOCK_SIZE = 1024
+
 def setting_1__directly_on_listops(model_cls, model_kwargs, batch_size=256):
     train_dataset = ListOpsDataset(split='train', n_samples=1500, task='classification')
     tokenizer = train_dataset.tokenizer
@@ -14,7 +16,7 @@ def setting_1__directly_on_listops(model_cls, model_kwargs, batch_size=256):
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
     # Instantiate the model
-    model = model_cls(vocab_size=vocab_size, n_classes=n_classes, **model_kwargs)
+    model = model_cls(vocab_size=vocab_size, n_classes=n_classes, block_size=BLOCK_SIZE, **model_kwargs)
 
     train(model, train_dataloader, test_dataloader, num_epochs=5, task='classification')
 
@@ -31,7 +33,7 @@ def setting_2__clm_pretrain_text_then_listops(model_cls, model_kwargs, batch_siz
     listops_test_dataset = ListOpsDataset(split='test', tokenizer=tokenizer, n_samples=10, task='classification')
 
     # 1.C. Init model
-    model = model_cls(vocab_size=vocab_size, n_classes=n_classes, **model_kwargs)
+    model = model_cls(vocab_size=vocab_size, n_classes=n_classes, block_size=BLOCK_SIZE, **model_kwargs)
 
     # 2. Causal-LM pretrain on other dataset (e.g. OpenWebText)
     print("Performing auto-regressive/causal LM training on OpenWebText dataset.")
@@ -57,7 +59,7 @@ def setting_3__clm_pretrain_listops_then_listops(model_cls, model_kwargs, batch_
     listops_test_dataset = ListOpsDataset(split='test', tokenizer=tokenizer, n_samples=10, task='auto_regressive')
 
     # 1.C. Init model
-    model = model_cls(vocab_size=vocab_size, n_classes=n_classes, **model_kwargs)
+    model = model_cls(vocab_size=vocab_size, n_classes=n_classes, block_size=BLOCK_SIZE, **model_kwargs)
 
     # 2. Causal-LM pretrain on other dataset (e.g. OpenWebText)
     print("Performing auto-regressive/causal-LM training on ListOps dataset.")
@@ -74,5 +76,10 @@ def setting_3__clm_pretrain_listops_then_listops(model_cls, model_kwargs, batch_
     train(model, train_dataloader, test_dataloader, num_epochs=5, task='classification')
 
 
-# setting_1__directly_on_listops()
-setting_3__clm_pretrain_listops_then_listops(LSTMClassifier, {'hidden_dim': 28, 'num_layers': 3})
+if __name__ == '__main__':
+    from models.transformer import TransformerEncoder
+    from models.s4 import S4Encoder
+    from models.lstm import LSTMEncoder, LSTMTorchEncoder
+    setting_1__directly_on_listops(GenericClassifier,
+                                   {'hidden_dim': 64, 'num_layers': 5,
+                                    'encoder_module': S4Encoder})
