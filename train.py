@@ -4,7 +4,7 @@ from data_processing import TORCH_IGNORE_INDEX
 from torch.nn import functional as F
 
 from utils import print_num_params
-
+from livelossplot import PlotLosses
 
 # TODO control n_samples and n_epoch to discard test setting
 
@@ -22,6 +22,7 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10, ta
     """
 
     print_num_params(model.encoder)
+    plotlosses = PlotLosses()
 
     # Define criterion for each task
     criterion_lm = lambda logits, targets: F.cross_entropy(logits.view(-1, logits.size(-1)),
@@ -47,10 +48,15 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10, ta
             loss.backward()
             optimizer.step()
 
+            # aggregate metrics
             avg_loss += loss.item()
             tot += 1
-        # TODO validation loss on each step
+            plotlosses.update({'train_loss': loss.item()})
+            # TODO validation loss on each step
+
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss / tot}')
+
+    plotlosses.send()
 
     # Test the model for classification
     model.eval()
