@@ -13,4 +13,5 @@ Experimenting performance of different architectures and different methods of tr
 - https://github.com/karpathy/nanoGPT
 - ...
 
+# About
 Project was written as part of an assignment in Advanced Deep Learning course.
