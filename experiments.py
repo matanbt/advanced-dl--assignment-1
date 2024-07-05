@@ -96,4 +96,5 @@ if __name__ == '__main__':
     from models.lstm import LSTMEncoder, LSTMTorchEncoder
     setting_1__directly_on_listops(GenericClassifier,
                                    {'hidden_dim': 64, 'num_layers': 5,
-                                    'encoder_module': S4Encoder})
+                                    'encoder_module': S4Encoder},
+                                   batch_size=256, num_epochs=500)

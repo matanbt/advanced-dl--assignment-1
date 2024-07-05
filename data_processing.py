@@ -75,7 +75,7 @@ class ListOpsDataset(TensorDataset):
     def __init__(self,
                  split: str = 'train',
                  tokenizer=None,  # TODO support importing tokenizer
-                 n_samples: int = None,
+                 n_samples: int = LIMIT_N_SAMPLES,
                  task: str = 'classification',
                  max_length: int = 1024,
                  ):
@@ -143,7 +143,7 @@ class ListOpsDataset(TensorDataset):
 
 class OpenWebTextDataset(TensorDataset):
     def __init__(self, split='train', tokenizer=None, seq_len=1024,
-                 n_samples: int = None):
+                 n_samples: int = LIMIT_N_SAMPLES):
         super().__init__()
         self.seq_len = seq_len
 
@@ -157,7 +157,7 @@ class OpenWebTextDataset(TensorDataset):
             self.tokenizer.add_tokens_from(self.dataset,
                                            preprocess_fn=preprocess_text)  # TODO isn't it just a large tet sample?
 
-        # TODO make sure this can tokenizer the ListOps dataset
+        # TODO make sure this can tokenize the ListOps dataset
         # TODO ponder about this tokenization - is it correct ot use this character-level tokenization? should we do something else to support ListOps?
 
         # Tokenize all the dataset with it, and concat all the tokens

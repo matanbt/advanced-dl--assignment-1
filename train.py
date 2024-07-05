@@ -5,14 +5,11 @@ from torch.nn import functional as F
 
 from utils import print_num_params
 from livelossplot import PlotLosses
-
-# TODO control n_samples and n_epoch to discard test setting
+import time
 
 
 def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
           task='classification', device='cuda'):
-    # TODO add val-set support! (through the training)
-    # TODO live plot it
     """
 
     :param model: the model to train. We assume two outputs - logits for vocabulary and logits for classification.
@@ -24,6 +21,7 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
 
     print_num_params(model.encoder)
     plotlosses = PlotLosses()
+    start_time = time.time()
 
     # Define criterion for each task
     criterion_lm = lambda logits, targets: F.cross_entropy(logits.view(-1, logits.size(-1)),
@@ -54,11 +52,10 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
             avg_loss += loss.item()
             tot += 1
             plotlosses.update({'train_loss': loss.item()})
+            plotlosses.send()
             # TODO validation loss on each step
 
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss / tot}')
-
-    plotlosses.send()
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss / tot}, time elapsed: {(time.time() - start_time) / 60:.2f}mins')
 
     # Test the model for classification
     model.eval()

@@ -101,7 +101,7 @@ class TransformerEncoder(nn.Module):
                  dropout_p=0.1, n_head=4,
                  **kwargs):
         super().__init__()
-        self.blocks = [Block(hidden_dim, n_head, dropout_p) for _ in range(num_layers)]
+        self.blocks = nn.ModuleList([Block(hidden_dim, n_head, dropout_p) for _ in range(num_layers)])
 
     def forward(self, x):
         for block in self.blocks:
