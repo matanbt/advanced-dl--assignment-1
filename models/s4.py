@@ -37,7 +37,7 @@ class S4Encoder(nn.Module):
             z = dropout(z)  # Apply dropout on the S4's output
             x = layer_norm(z + x)  # Residual connection, then normalize ('post-norm')
 
-        return x, None
+        return x
 
 
 """

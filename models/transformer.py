@@ -107,4 +107,4 @@ class TransformerEncoder(nn.Module):
         for block in self.blocks:
             x = block(x)
 
-        return x, None
+        return x
