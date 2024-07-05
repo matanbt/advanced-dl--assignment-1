@@ -1,5 +1,6 @@
 import torch
-from torch import nn, optim
+from torch import nn
+
 
 class GenericClassifier(nn.Module):
 

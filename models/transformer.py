@@ -10,8 +10,8 @@ from torch.nn import LayerNorm
 """
 Implementation of the encoder in 'Attention is all you need'
     [https://arxiv.org/pdf/1706.03762].
-With the help and inspiration from non-official torch implementation of attention is all you need and 
-GPT2 implementation from scratch by Andrej Karpathy
+With the help and inspiration from (1) the paper itself (2) non-official torch implementation of attention is all 
+you need and (3) GPT2 implementation from scratch by Andrej Karpathy
     [https://github.com/karpathy/nanoGPT/blob/master/model.py]
     [https://github.com/jadore801120/attention-is-all-you-need-pytorch]
 """

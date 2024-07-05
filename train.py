@@ -9,7 +9,8 @@ from livelossplot import PlotLosses
 # TODO control n_samples and n_epoch to discard test setting
 
 
-def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10, task='classification'):
+def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
+          task='classification', device='cuda'):
     # TODO add val-set support! (through the training)
     # TODO live plot it
     """
@@ -39,6 +40,7 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10, ta
     for epoch in range(num_epochs):
         avg_loss, tot = 0, 0
         for X, y in train_dataloader:
+            X, y = X.to(device), y.to(device)
             optimizer.zero_grad()
             logits_class, logits_vocab = model(X)
             if task == 'classification':
@@ -64,6 +66,7 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10, ta
         with torch.no_grad():
             correct, total = 0, 0
             for X, y in test_dataloader:
+                X, y = X.to(device), y.to(device)
                 outputs = model(X)
                 predicted = outputs[0].argmax(dim=-1)
                 total += y.size(0)

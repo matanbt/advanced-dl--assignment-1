@@ -6,8 +6,13 @@ from datasets import load_dataset
 from torch.utils.data import Dataset, TensorDataset
 
 TORCH_IGNORE_INDEX = -1
+LIMIT_N_SAMPLES = None  # can set a number for debugging purposes
 
-# Loosely based on: https://github.com/google-research/long-range-arena/blob/main/lra_benchmarks/text_classification/input_pipeline.py
+"""
+Loading the ListOps dataset and the OpenWebText dataset.
+>> Referring to LRA's paper and loosely based on: https://github.com/google-research/long-range-arena/blob/main/lra_benchmarks/text_classification/input_pipeline.py 
+"""
+
 
 def preprocess_lra(s: str) -> List[str]:
     # LRA tokenizer renames ']' to 'X' and delete parentheses as their tokenizer removes
