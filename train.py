@@ -30,7 +30,7 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
     criterion_cls = nn.CrossEntropyLoss()
 
     # Init optimizer
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.AdamW(model.parameters(), lr=0.001)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)  [TODO OPTIONAL]
 
     # Train the model
