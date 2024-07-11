@@ -31,7 +31,7 @@ def setting_1__directly_on_listops(model_cls, model_kwargs,
 def setting_2__clm_pretrain_text_then_listops(model_cls, model_kwargs,
                                               batch_size=128, num_epochs_pt=1, num_epochs_ft=1,
                                               n_samples_listops=None, n_samples_wiki=None,
-                                              train_time_limit_secs=None,
+                                              timelimit_pt=600, timelimit_ft=600,
                                               device='cuda'
                                               ):
     # 1. Load data and init model
@@ -54,8 +54,8 @@ def setting_2__clm_pretrain_text_then_listops(model_cls, model_kwargs,
     text_train_dataloader = DataLoader(text_dataset, batch_size=batch_size, shuffle=True)
     text_test_dataloader = DataLoader(text_dataset, batch_size=batch_size, shuffle=True)  # TODO make it an held-out test-set
 
-    train(model, text_train_dataloader, text_test_dataloader, num_epochs=num_epochs_pt, task='auto_regressive',
-          device=device, time_limit_secs=train_time_limit_secs)
+    model, _ = train(model, text_train_dataloader, text_test_dataloader, num_epochs=num_epochs_pt, task='auto_regressive',
+          device=device, time_limit_secs=timelimit_pt)
 
     # 3. Train on ListOps
     print("Fine-tuning on ListOps dataset.")
@@ -63,12 +63,14 @@ def setting_2__clm_pretrain_text_then_listops(model_cls, model_kwargs,
     test_dataloader = DataLoader(listops_test_dataset, batch_size=batch_size, shuffle=True)
 
     return train(model, train_dataloader, test_dataloader, num_epochs=num_epochs_ft, task='classification',
-                 device=device, time_limit_secs=train_time_limit_secs)
+                 device=device, time_limit_secs=timelimit_ft)
 
 
 def setting_3__clm_pretrain_listops_then_listops(model_cls, model_kwargs,
-                                                 batch_size=128, num_epochs_pt=1, num_epochs_ft=1,
-                                                 n_samples_listops=None, train_time_limit_secs=None,
+                                                 batch_size=128,
+                                                 num_epochs_pt=1, num_epochs_ft=1,
+                                                 timelimit_pt=600, timelimit_ft=600,
+                                                 n_samples_listops=None,
                                                  device='cuda'
                                                  ):
     # 1. Load data and init model
@@ -86,8 +88,8 @@ def setting_3__clm_pretrain_listops_then_listops(model_cls, model_kwargs,
     print("Performing auto-regressive/causal-LM training on ListOps dataset.")
     train_dataloader = DataLoader(listops_train_dataset, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(listops_test_dataset, batch_size=batch_size, shuffle=True)
-    train(model, train_dataloader, test_dataloader, num_epochs=num_epochs_pt, task='auto_regressive',
-          device=device, time_limit_secs=train_time_limit_secs)
+    model, _ = train(model, train_dataloader, test_dataloader, num_epochs=num_epochs_pt, task='auto_regressive',
+          device=device, time_limit_secs=timelimit_pt)
 
     # 3. Train on ListOps
     print("Fine-tuning on ListOps dataset.")
@@ -96,14 +98,20 @@ def setting_3__clm_pretrain_listops_then_listops(model_cls, model_kwargs,
     train_dataloader = DataLoader(listops_train_dataset, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(listops_test_dataset, batch_size=batch_size, shuffle=True)
     return train(model, train_dataloader, test_dataloader, num_epochs=num_epochs_ft, task='classification',
-                 device=device, time_limit_secs=train_time_limit_secs)
+                 device=device, time_limit_secs=timelimit_ft)
 
 
 if __name__ == '__main__':
     from models.transformer import TransformerEncoder
     from models.s4 import S4Encoder
     from models.lstm import LSTMEncoder, LSTMTorchEncoder
-    setting_1__directly_on_listops(GenericClassifier,
-                                   {'hidden_dim': 64, 'num_layers': 5,
-                                    'encoder_module': S4Encoder},
-                                   batch_size=256, num_epochs=500)
+
+
+    setting_1__directly_on_listops(
+        model_cls=GenericClassifier,
+        model_kwargs={'hidden_dim': 64, 'num_layers': 2,
+                                    'encoder_module': LSTMEncoder},
+        batch_size=128,
+        num_epochs=1,
+        train_time_limit_secs=60
+    )

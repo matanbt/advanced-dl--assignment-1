@@ -54,12 +54,14 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
             if tot % 50:
                 plotlosses.update({'train_loss': loss.item()})
                 plotlosses.send()
+                # TODO validation loss on each step
             if time_limit_secs is not None and time.time() - start_time > time_limit_secs:
-                print(f'Time limit reached. Stopping training at epoch {epoch + 1}, step {tot}.')
                 break
-            # TODO validation loss on each step
 
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss / tot}, time elapsed: {(time.time() - start_time) / 60:.2f}mins')
+        if time_limit_secs is not None and time.time() - start_time > time_limit_secs:
+            print(f'Time limit reached. Stopping training at epoch {epoch + 1}/ step {tot}.')
+            break
 
     # Test the model for classification
     model.eval()
