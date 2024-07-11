@@ -33,6 +33,7 @@ class GenericClassifier(nn.Module):
 
     def forward(self,
                 sentence,  # Bsz, SeqLen
+                mask=None
                 ):
         B, L = sentence.size()
 
@@ -46,7 +47,7 @@ class GenericClassifier(nn.Module):
         # Init hidden representation:
         out = tok_emb + pos_emb  # B, L, H
 
-        out = self.encoder(out)  # Bsz, SeqLen, HiddenDim
+        out = self.encoder(out, mask=mask)  # Bsz, SeqLen, HiddenDim
 
         # For LM (next-token prediction)
         logits_vocab = self.lm_head(out)  # Bsz, SeqLen, VocabSize

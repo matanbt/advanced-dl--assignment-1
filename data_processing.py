@@ -37,17 +37,28 @@ class Tokenizer:
         self.tokenizer: callable = None
         self.max_length = max_length  # TODO parameter  # max sequence length, for padding and truncation
 
-    def __call__(self, s: str, preprocess_fn: Callable[[str], List[str]] = None, pre_padding: bool = True):
+    def __call__(self, s: str, preprocess_fn: Callable[[str], List[str]] = None,
+                 pre_padding: bool = True) -> (List[int], List[int]):
+        """
+        Encoding a string into a list of integers, and applying padding if needed.
+        :param s: string to tokenize
+        :param preprocess_fn: function to apply prior to tokenization
+        :param pre_padding: whether to apply padding from left (True) or not at to pad at all (False).
+        :return: the tokenized string as a list of integers, and the pad mask (can also serve as attention mask)
+        """
         if preprocess_fn:
             s = preprocess_fn(s)
         out = [
                   self.token_to_token_id.get(token, self.token_to_token_id["<unk>"]) for token in s
               ][:(self.max_length - 1)]
         out += [self.token_to_token_id['<eos>']]
+        pad_mask = [1] * len(out)  # 1 for tokens, 0 for padding
         if pre_padding:
             # add pre-padding (<pad> token until max_length)
             out = [self.token_to_token_id['<pad>']] * (self.max_length - len(out)) + out
-        return out
+            pad_mask = [0] * (self.max_length - len(pad_mask)) + pad_mask
+
+        return out, pad_mask  # pad_mask can also be used as attention mask
 
     def load(self):
         pass  # TODO load from file
@@ -111,34 +122,28 @@ class ListOpsDataset(TensorDataset):
         return len(self.data)
 
     def __getitem__(self, idx):
+        """:returns the tokenized source, padding/attention mask, and the target class to predict"""
         # tokenize the sample:
         source = self.data.iloc[idx, 1]
-        source = self.tokenizer(source, preprocess_fn=preprocess_lra)
+        source, pad_mask = self.tokenizer(source, preprocess_fn=preprocess_lra)
 
         # Define the target wrp to the task:
         if self.task == 'classification':
             # for classification, the target is a single integer
             target = self.data.iloc[idx, 0]
-            # target = [TORCH_IGNORE_INDEX] * (len(source) - 1)  # ignore the target for classification
-            # target = target + [target_label]   # we want the EOS token to predict the target
-        # elif self.task == 'classification_of_vocab_token':  # TODO how to train classification after vocabulary?
-        #     # for classification that was pretrained on a full vocabulary (then, our target is not a class but a token)
-        #     target_label = self.data.iloc[idx, 0]
-        #     target = [TORCH_IGNORE_INDEX] * (len(source) - 1)
-        #     target = target + [self.tokenizer(target_label)]
         elif self.task == 'auto_regressive':
             # for auto-regressive, the target is a list of integers
             source, target = source[:-1], source[1:]
 
             # Ignore the padding tokens (`-1` is an ignored index in torch's CrossEntropyLoss)
             # * Note: this means that the model will not be penalized on predictions after a padding token
-            target = [t if s != self.tokenizer.token_to_token_id['<pad>'] else TORCH_IGNORE_INDEX
-                      for s, t in zip(source, target)]
+            target = [t if m == 1 else TORCH_IGNORE_INDEX for t, m in zip(target, pad_mask)]
+
         else:
             raise ValueError(f"Unknown task: {self.task}")
 
-        source, target = torch.tensor(source), torch.tensor(target)
-        return source, target
+        source, pad_mask, target = torch.tensor(source), torch.tensor(pad_mask), torch.tensor(target)
+        return source, pad_mask, target
 
 
 class OpenWebTextDataset(TensorDataset):
@@ -161,7 +166,7 @@ class OpenWebTextDataset(TensorDataset):
         # TODO ponder about this tokenization - is it correct ot use this character-level tokenization? should we do something else to support ListOps?
 
         # Tokenize all the dataset with it, and concat all the tokens
-        self.dataset = [self.tokenizer(s, preprocess_fn=preprocess_text, pre_padding=False) for s in self.dataset]
+        self.dataset = [self.tokenizer(s, preprocess_fn=preprocess_text, pre_padding=False)[0] for s in self.dataset]
         # TODO note that this means we do not pretrain with the padding token.. maybe it's not good? (seems that Ankit didn't pad in pretrain)
         self.dataset = [token for sample in self.dataset for token in sample]
 
@@ -172,6 +177,7 @@ class OpenWebTextDataset(TensorDataset):
         return len(self.dataset) - self.seq_len
 
     def __getitem__(self, idx):
+        """:returns a sequence of `seq_len` tokens, padding/attention mask, and the target token to predict"""
         sample = self.dataset[idx: idx + self.seq_len]
         sample, target = sample[:-1], sample[1:]  # auto-regressive task
-        return torch.tensor(sample), torch.tensor(target)
+        return torch.tensor(sample), torch.ones(self.seq_len - 1), torch.tensor(target)

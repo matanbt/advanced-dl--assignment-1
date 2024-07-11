@@ -37,7 +37,7 @@ class CausalSelfAttention(nn.Module):
         self.n_head = n_head
         self.n_embd = hidden_dim
 
-    def forward(self, x):
+    def forward(self, x, mask=None):
         B, T, C = x.size()  # batch size, sequence length, embedding dimensionality (hidden_dim)
 
         # calculate query, key, values for all heads in batch and move head forward to be the batch dim
@@ -46,9 +46,14 @@ class CausalSelfAttention(nn.Module):
         q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)  # (B, nh, T, hs)
         v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)  # (B, nh, T, hs)
 
-        # causal self-attention; Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
+        # self-attention; Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
         att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
+
+        # Masking the attention:
         # att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float('-inf'))  # [DISABLED] we allow attending from and to all tokens
+        if mask is not None:
+            att = att.masked_fill(mask[:, None, None, :] != 0, float('-inf'))
+
         att = F.softmax(att, dim=-1)
         y = att @ v  # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
         y = y.transpose(1, 2).contiguous().view(B, T, C)  # re-assemble all head outputs side by side
@@ -87,8 +92,8 @@ class Block(nn.Module):  # residual block
         self.ln_2 = LayerNorm(hidden_dim)
         self.drop_2 = nn.Dropout(p_dropout)  # todo good?
 
-    def forward(self, x):
-        x = self.ln_1(x + self.drop_1(self.attn(x)))
+    def forward(self, x, mask):
+        x = self.ln_1(x + self.drop_1(self.attn(x, mask)))
         x = self.ln_2(x + self.drop_2(self.ffn(x)))
         return x
 
@@ -103,8 +108,8 @@ class TransformerEncoder(nn.Module):
         super().__init__()
         self.blocks = nn.ModuleList([Block(hidden_dim, n_head, dropout_p) for _ in range(num_layers)])
 
-    def forward(self, x):
+    def forward(self, x, mask):
         for block in self.blocks:
-            x = block(x)
+            x = block(x, mask)
 
         return x

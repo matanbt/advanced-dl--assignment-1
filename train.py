@@ -37,10 +37,10 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
     model.train()
     for epoch in range(num_epochs):
         avg_loss, tot = 0, 0
-        for X, y in train_dataloader:
-            X, y = X.to(device), y.to(device)
+        for X, M, y in train_dataloader:  # input, mask, target
+            X, M, y = X.to(device), M.to(device), y.to(device)
             optimizer.zero_grad()
-            logits_class, logits_vocab = model(X)
+            logits_class, logits_vocab = model(X, mask=M)
             if task == 'classification':
                 loss = criterion_cls(logits_class, y)
             elif task == 'auto_regressive':
@@ -54,7 +54,6 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
             if tot % 50:
                 plotlosses.update({'train_loss': loss.item()})
                 plotlosses.send()
-                # TODO validation loss on each step
             if time_limit_secs is not None and time.time() - start_time > time_limit_secs:
                 break
 
@@ -69,9 +68,9 @@ def train(model: nn.Module, train_dataloader, test_dataloader, num_epochs=10,
     if task == 'classification':
         with torch.no_grad():
             correct, total = 0, 0
-            for X, y in test_dataloader:
-                X, y = X.to(device), y.to(device)
-                outputs = model(X)
+            for X, M, y in test_dataloader:
+                X, M, y = X.to(device), M.to(device), y.to(device)
+                outputs = model(X, mask=M)
                 predicted = outputs[0].argmax(dim=-1)
                 total += y.size(0)
                 correct += (predicted == y).sum().item()

@@ -26,7 +26,7 @@ class S4Encoder(nn.Module):
             self.layer_norms.append(nn.LayerNorm(hidden_dim))
             self.dropouts.append(nn.Dropout(p_dropout))
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         """
         Gets `x` of shape (Bsz, seqLen, HiddenDim)
         Returns `x` of shape (Bsz, seqLen, HiddenDim) and `None`

@@ -105,13 +105,11 @@ if __name__ == '__main__':
     from models.transformer import TransformerEncoder
     from models.s4 import S4Encoder
     from models.lstm import LSTMEncoder, LSTMTorchEncoder
-
-
     setting_1__directly_on_listops(
         model_cls=GenericClassifier,
-        model_kwargs={'hidden_dim': 64, 'num_layers': 2,
-                                    'encoder_module': LSTMEncoder},
-        batch_size=128,
+        model_kwargs={'hidden_dim': 32, 'num_layers': 2,
+                                    'encoder_module': TransformerEncoder},
+        batch_size=32,
         num_epochs=1,
         train_time_limit_secs=60
     )

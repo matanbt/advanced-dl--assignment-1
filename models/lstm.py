@@ -59,7 +59,7 @@ class LSTMBlock(nn.Module):
         self.sigma_g = nn.Sigmoid()
         self.sigma_c = self.sigma_h = nn.Tanh()
 
-    def forward(self, x, prev_states=None):
+    def forward(self, x, prev_states=None, **kwargs):
         B, L, H = x.size()
 
         if prev_states is None:
