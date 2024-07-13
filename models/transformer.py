@@ -52,7 +52,7 @@ class CausalSelfAttention(nn.Module):
         # Masking the attention:
         # att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float('-inf'))  # [DISABLED] we allow attending from and to all tokens
         if mask is not None:
-            att = att.masked_fill(mask[:, None, None, :] != 0, float('-inf'))
+            att = att.masked_fill(mask[:, None, None, :] == 0, float('-inf'))
 
         att = F.softmax(att, dim=-1)
         y = att @ v  # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)

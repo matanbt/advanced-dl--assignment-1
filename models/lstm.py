@@ -18,7 +18,7 @@ class LSTMEncoder(nn.Module):
             self.lstm_blocks.append(LSTMBlock(hidden_dim))
             self.dropouts.append(nn.Dropout(p_dropout))
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         state = None
         for lstm_block, dropout in zip(self.lstm_blocks, self.dropouts):  # TODO verify correctness
             x, state = lstm_block(x, state)
@@ -59,7 +59,7 @@ class LSTMBlock(nn.Module):
         self.sigma_g = nn.Sigmoid()
         self.sigma_c = self.sigma_h = nn.Tanh()
 
-    def forward(self, x, prev_states=None, **kwargs):
+    def forward(self, x, prev_states=None):
         B, L, H = x.size()
 
         if prev_states is None:

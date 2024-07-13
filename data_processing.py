@@ -134,6 +134,7 @@ class ListOpsDataset(TensorDataset):
         elif self.task == 'auto_regressive':
             # for auto-regressive, the target is a list of integers
             source, target = source[:-1], source[1:]
+            pad_mask = pad_mask[:-1]
 
             # Ignore the padding tokens (`-1` is an ignored index in torch's CrossEntropyLoss)
             # * Note: this means that the model will not be penalized on predictions after a padding token
