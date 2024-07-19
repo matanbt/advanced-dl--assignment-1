@@ -1,6 +1,8 @@
-# Assignment 1: What is Best for _Long Range Arena_?
+# Adv. DL Assignment 1: What is Best for _Long Range Arena_?
 
 Experimenting performance of different architectures and different methods of training on the Long Range Arena (LRA) dataset ListOPS.
+
+[Project code](https://github.com/matanbt/advanced-dl--assignment-1)
 
 ## Description
 We chose to evaluate on the ListOps dataset from the Long Range Arena (LRA) benchmark. 
@@ -10,8 +12,10 @@ We have implemented the data processing, models (S4, LSTM, Transformer) and the 
 
 ## Running the experiments
 The experiments can be run (and were run) on the notebook `ExperimentingListOps.ipynb`, where we also describe their setting and chosen configuration. 
-Opting for a thorough and accurate (as possible)  evaluation we ran this notebook
-on the university servers, and the resulted outputs are available in `./ExperimentingListOps__outputs.html`.
+We note that, due to hardships with timeouts and the limited compute provided in Google Colab, along with the desire to run experiments of higher quality - we ran the experiment on the university servers (using slurm). Evaluation we ran the aforementioned notebook
+(on the university servers) with the resulted outputs available in `./ExperimentingListOps__outputs.html`, or [here](https://htmlpreview.github.io/?https://github.com/matanbt/advanced-dl--assignment-1/blob/main/ExperimentingListOps__outputs.html).
+
+
 
 
 ## Results
